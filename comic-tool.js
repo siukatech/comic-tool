@@ -27,7 +27,12 @@ const tasks = [];
 
 files.forEach(file => {
     // Regex matching, e.g., matching "My_01.7z" and capturing the volume number
-    const regex = new RegExp(`^${origPrefix}_(\\d+)\\.${ext}$`, 'i');
+    // 舊的 (只支援整數):
+    // const regex = new RegExp(`^${origPrefix}_(\\d+)\\.${ext}$`, 'i');
+
+    // 新的 (支援整數及小數，例如 18 或 18.5):
+    const regex = new RegExp(`^${origPrefix}_(\\d+(?:\\.\\d+)?)\\.${ext}$`, 'i');
+
     const match = file.match(regex);
     if (match) {
         tasks.push({
@@ -55,8 +60,8 @@ console.log(`🚀 🚀 🚀 啟動批處理流程，共 ${tasks.length} 個檔�
 // 階段 1: 全部 UNZIP
 // ==========================================
 console.log('\n=========================================');
-console.log('📂 [Phase 1/5] Extracting all archives (UNZIP)...');
-console.log('📂 [Phase 1/5] 開始全部解壓 (UNZIP)...');
+console.log('📂 [Phase 1/6] Extracting all archives (UNZIP)...');
+console.log('📂 [Phase 1/6] 開始全部解壓 (UNZIP)...');
 console.log('=========================================');
 tasks.forEach(task => {
     console.log(`📦 Extracting: ${task.file} ...`);
@@ -75,8 +80,8 @@ tasks.forEach(task => {
 // 階段 2: 全部 CREATE NEW FOLDER
 // ==========================================
 console.log('\n=========================================');
-console.log('📁 [Phase 2/5] Creating directories for resized outputs...');
-console.log('📁 [Phase 2/5] 開始全部建立 Resize 暫存資料夾...');
+console.log('📁 [Phase 2/6] Creating directories for resized outputs...');
+console.log('📁 [Phase 2/6] 開始全部建立 Resize 暫存資料夾...');
 console.log('=========================================');
 tasks.forEach(task => {
     console.log(`📂 Creating folder: ${task.resizeOutputDir}`);
@@ -91,8 +96,8 @@ tasks.forEach(task => {
 // 階段 3: 全部 CONVERT TO JPG (MOGRIFY)
 // ==========================================
 console.log('\n=========================================');
-console.log('🖼️ [Phase 3/5] Processing image resizing and formatting (MOGRIFY)...');
-console.log('🖼️ [Phase 3/5] 開始全部轉換及縮放圖片 (MOGRIFY)...');
+console.log('🖼️ [Phase 3/6] Processing image resizing and formatting (MOGRIFY)...');
+console.log('🖼️ [Phase 3/6] 開始全部轉換及縮放圖片 (MOGRIFY)...');
 console.log('=========================================');
 tasks.forEach(task => {
     console.log(`⚡ Resizing: ${task.unarOutputDir} -> ${task.resizeOutputDir} ...`);
@@ -107,12 +112,12 @@ tasks.forEach(task => {
 });
 
 // ==========================================
-// Phase 4: ZIP ALL OUTPUTS (Originals + Resized)
-// 階段 4: 全部 ZIP (原圖 + Resize 圖)
+// Phase 4: ZIP ALL OUTPUTS (Originals)
+// 階段 4: 全部 ZIP (原圖)
 // ==========================================
 console.log('\n=========================================');
-console.log('🤐 [Phase 4/5] Packaging outputs into Zip archives...');
-console.log('🤐 [Phase 4/5] 開始全部打包 (ZIP)...');
+console.log('🤐 [Phase 4/6] Packaging outputs into Zip archives...');
+console.log('🤐 [Phase 4/6] 開始全部打包 (ZIP)...');
 console.log('=========================================');
 tasks.forEach(task => {
     try {
@@ -122,26 +127,41 @@ tasks.forEach(task => {
         console.log(`🤐 打包原圖: ${task.finalOrigZip} ...`);
         let zipOrigCmd = `zip -j "${task.finalOrigZip}" "./${task.unarOutputDir}/"*`;
         execSync(zipOrigCmd, { stdio: 'inherit' });
-
-        // 4b. Package Resized Images (Flattened path)
-        // 4b. Zip Resize 圖
-        console.log(`🤐 Archiving resized images: ${task.finalResizeZip} ...`);
-        console.log(`🤐 打包 Resize 圖: ${task.finalResizeZip} ...`);
-        let zipResizeCmd = `zip -j "${task.finalResizeZip}" "./${task.resizeOutputDir}/"*`;
-        execSync(zipResizeCmd, { stdio: 'inherit' });
     } catch (e) {
-        console.error(`❌ Archiving failed for volume ${task.num}:`, e.message);
+        console.error(`❌ Archiving original failed for volume ${task.num}:`, e.message);
         console.error(`❌ 打包編號 ${task.num} 失敗:`, e.message);
     }
 });
 
 // ==========================================
-// Phase 5: VALIDATE ARCHIVE INTEGRITY & CLEANUP
-// 階段 5: 全部 UNZIP TEST & CLEANUP
+// Phase 5: ZIP ALL OUTPUTS (Resized)
+// 階段 5: 全部 ZIP (Resize 圖)
 // ==========================================
 console.log('\n=========================================');
-console.log('🧪 [Phase 5/5] Verifying archive integrity and purging temporary folders...');
-console.log('🧪 [Phase 5/5] 開始全部進行 Zip 測試與清理暫存...');
+console.log('🤐 [Phase 5/6] Packaging outputs into Zip archives...');
+console.log('🤐 [Phase 5/6] 開始全部打包 (ZIP)...');
+console.log('=========================================');
+tasks.forEach(task => {
+    try {
+        // 5. Package Resized Images (Flattened path)
+        // 5. Zip Resize 圖
+        console.log(`🤐 Archiving resized images: ${task.finalResizeZip} ...`);
+        console.log(`🤐 打包 Resize 圖: ${task.finalResizeZip} ...`);
+        let zipResizeCmd = `zip -j "${task.finalResizeZip}" "./${task.resizeOutputDir}/"*`;
+        execSync(zipResizeCmd, { stdio: 'inherit' });
+    } catch (e) {
+        console.error(`❌ Archiving resized failed for volume ${task.num}:`, e.message);
+        console.error(`❌ 打包編號 ${task.num} 失敗:`, e.message);
+    }
+});
+
+// ==========================================
+// Phase 6: VALIDATE ARCHIVE INTEGRITY & CLEANUP
+// 階段 6: 全部 UNZIP TEST & CLEANUP
+// ==========================================
+console.log('\n=========================================');
+console.log('🧪 [Phase 6/6] Verifying archive integrity and purging temporary folders...');
+console.log('🧪 [Phase 6/6] 開始全部進行 Zip 測試與清理暫存...');
 console.log('=========================================');
 tasks.forEach(task => {
     console.log(`\n🔍 Validating outputs for volume ${task.num}...`);
