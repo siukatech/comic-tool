@@ -49,6 +49,14 @@ If you have files named WITCH WATCH-TW_01.7z, WITCH WATCH-TW_02.7z with the pass
 ```bash
 node comic-tool.js "WITCH WATCH-TW_" 7z 1400 "WITCH_WATCH" 'cscjBEn#iU0w!j9f'
 ```
+```
+# 格式：node comic-tool.js <orig_prefix> <ext> <height> <new_prefix> [password] [skip_phases]
+# 例子：skip 第 1, 3, 5 步 (密碼留空就俾個 "" 佢)
+node comic-tool.js My 7z 1400 New_My "" "1,3,5"
+
+# 有密碼兼 skip 第 2 步
+node comic-tool.js CLAMP 7z 1400 CLAMP_X 'my_password' "2"
+```
 
 ### Output Results
 For an input file `WITCH WATCH-TW_01.7z`, the tool outputs two packages into your current directory:
